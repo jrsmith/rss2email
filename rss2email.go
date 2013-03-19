@@ -39,15 +39,6 @@ func main() {
 
 	json.Unmarshal(configFile, &config)
 
-	fmt.Printf("%v", config)
-
-//	var feedList = []string {
-//		"http://musicforprogramming.net/rss.php",
-//		"http://feeds.feedburner.com/simpledesktops",
-//		"http://www.theverge.com/rss/index.xml",
-//		"http://jrsmith.tumblr.com/rss",
-//	}
-
 	for _, url := range config.FeedURLs {
 		wg.Add(1)
 		go fetchFeed(url, 1)
