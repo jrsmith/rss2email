@@ -1,0 +1,16 @@
+{
+    "to_email": ["you@example.com"],
+    "feed_urls": [
+        "http://www.feedforall.com/sample.xml",
+        "http://www.feedforall.com/sample-feed.xml",
+        "http://www.feedforall.com/blog-feed.xml",
+        "http://www.rss-specifications.com/blog-feed.xml"
+    ],
+    "smtp": {
+        "username": "",
+        "password": "",
+        "from": "feeds@example.com",
+        "host": "smtp.example.com",
+        "outgoing_server": "smtp.example.com"
+    }
+}
