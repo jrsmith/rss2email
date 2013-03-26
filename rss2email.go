@@ -9,6 +9,7 @@ import (
 	"time"
 	"sync"
 	"io/ioutil"
+	"runtime"
 )
 
 type SMTPConfig struct {
@@ -25,10 +26,21 @@ type Config struct {
 	SMTP SMTPConfig
 }
 
+type Email struct {
+	Recipients []string
+	Sender string
+	Subject string
+	MimeType string
+	Body string
+}
+
 var wg sync.WaitGroup
 var config Config
+var afterDate time.Time = time.Date(2013, 3, 19, 0, 0, 0, 0)
 
 func main() {
+
+	runtime.GOMAXPROCS(4)
 
 	configFile, err := ioutil.ReadFile("./config.json")
 
@@ -50,14 +62,14 @@ func main() {
 
 func fetchFeed(url string, timeout int) {
 
+	fmt.Printf("Fetching feed %s\n", url)
+
 	feed := rss.New(timeout, true, nil, itemHandler)
 
 	for {
 
-		fmt.Printf("Fetching %s\n", url)
-
 		if err := feed.Fetch(url, nil); err != nil {
-			fmt.Fprintf(os.Stderr, "[e] %s: %s", url, err)
+			fmt.Fprintf(os.Stderr, "[e] %s: %s\n", url, err)
 			return
 		}
 		<-time.After(time.Duration(feed.SecondsTillUpdate() * 1e9))
@@ -86,7 +98,7 @@ func sendItem(subject string, content string) {
 		auth,
 		config.SMTP.From,
 		config.ToEmail,
-		[]byte("Subject: "+subject+"\n"+mime+content),
+		[]byte("To: "+config.ToEmail[0]+"\nSubject: "+subject+"\n"+mime+string(content)),
 	)
 
 	if err != nil {
@@ -99,22 +111,38 @@ func sendItem(subject string, content string) {
 
 func itemHandler(feed *rss.Feed, ch *rss.Channel, newItems []*rss.Item) {
 
-	fmt.Printf("%d new item(s) in %s\n", len(newItems), feed.Url)
+	fmt.Printf("Got %d items for %s\n", len(newItems), feed.Url)
 
 	for _, item := range newItems {
 
-		var title = item.Title
-		var content string
+		if item.PubDate > afterDate {
 
-		switch feed.Type {
-			case "rss":
-				content = item.Description
-			case "atom":
-				content = item.Content.Text
+			defer func(item *rss.Item) {
+
+				fmt.Println(item.PubDate)
+
+				if r := recover(); r != nil {
+					fmt.Println("goroutine paniced:", r)
+				}
+
+				// var title = item.Title
+				// var content string = ""
+
+				fmt.Printf("%v\n", feed.Type)
+
+				// switch feed.Type {
+				// 	case "rss":
+				// 		content = item.Description
+				// 	case "atom":
+				// 		content = item.Content.Text
+				// }
+
+				// sendItem(title, content)
+				// <-time.After(time.Duration(1e9 * 5))
+
+			}(item)
+
 		}
-
-		wg.Add(1)
-		go sendItem(title, content)
 
 	}
 
