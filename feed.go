@@ -57,6 +57,12 @@ func parseDate(date string) (time.Time, error) {
 
 func itemHandler(feed *rss.Feed, ch *rss.Channel, newItems []*rss.Item) {
 
+    defer func() {
+        if r := recover(); r != nil {
+            fmt.Println("goroutine panicked:", r)
+        }
+    }()
+
     fmt.Printf("Got %d items for %s\n", len(newItems), feed.Url)
 
     for _, item := range newItems {
@@ -75,27 +81,19 @@ func itemHandler(feed *rss.Feed, ch *rss.Channel, newItems []*rss.Item) {
 
         if parsedPubDate.After(afterDate) {
 
-            defer func(item *rss.Item) {
+            var title = item.Title
+            var content string = ""
 
-                if r := recover(); r != nil {
-                    fmt.Println("goroutine panicked:", r)
-                }
+            fmt.Printf("[%v] %v\n", parsedPubDate, item.Title)
 
-                var title = item.Title
-                var content string = ""
+            switch feed.Type {
+             case "rss":
+                 content = item.Description
+             case "atom":
+                 content = item.Content.Text
+            }
 
-                fmt.Printf("[%v] %v\n", parsedPubDate, item.Title)
-
-                switch feed.Type {
-                 case "rss":
-                     content = item.Description
-                 case "atom":
-                     content = item.Content.Text
-                }
-
-                sendItem(&title, &content)
-
-            }(item)
+            sendItem(&title, &content)
 
         }
 
