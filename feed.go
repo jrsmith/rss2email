@@ -84,16 +84,18 @@ func itemHandler(feed *rss.Feed, ch *rss.Channel, newItems []*rss.Item) {
             var title = item.Title
             var content string = ""
 
-            fmt.Printf("[%v] %v\n", parsedPubDate, item.Title)
+            fmt.Printf("[%v] %v\n", parsedPubDate, title)
 
             switch feed.Type {
-             case "rss":
-                 content = item.Description
-             case "atom":
-                 content = item.Content.Text
+                case "rss":
+                    content = item.Description
+                case "atom":
+                    content = item.Content.Text
+                default:
+		    return
             }
 
-            sendItem(&title, &content)
+            sendItem(title, content)
 
         }
 

@@ -15,7 +15,7 @@ type Email struct {
     Body string
 }
 
-func sendItem(subject *string, content *string) {
+func sendItem(subject string, content string) {
 
     fmt.Println("Sending mail")
 
